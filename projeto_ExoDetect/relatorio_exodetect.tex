@@ -1,0 +1,675 @@
+\documentclass[12pt, a4paper]{report}
+
+% --- Pacotes Essenciais ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{parskip}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{enumitem}
+\usepackage{mdframed}
+\usepackage{tcolorbox}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{setspace}
+
+% --- Geometria da Página ---
+\geometry{
+    a4paper,
+    top=2.5cm,
+    bottom=2.5cm,
+    left=3cm,
+    right=2.5cm
+}
+
+% --- Espaçamento entre linhas ---
+\setstretch{1.3}
+
+% --- Cores ---
+\definecolor{azulubi}{RGB}{0, 84, 166}
+\definecolor{cinzaclaro}{RGB}{245, 245, 245}
+\definecolor{verdeconfirmed}{RGB}{46, 204, 113}
+\definecolor{vermelhofalso}{RGB}{231, 76, 60}
+\definecolor{azulcandidate}{RGB}{52, 152, 219}
+\definecolor{cinzatexto}{RGB}{80, 80, 80}
+
+% --- Configuração de Hiperligações ---
+\hypersetup{
+    colorlinks=true,
+    linkcolor=azulubi,
+    urlcolor=azulubi,
+    citecolor=azulubi,
+    pdftitle={ExoDetect - Relatório de Projeto},
+    pdfauthor={Estudante UBI},
+}
+
+% --- Cabeçalho e Rodapé ---
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textcolor{azulubi}{\textbf{ExoDetect}}}
+\fancyhead[R]{\small\textcolor{cinzatexto}{Deteção Automatizada de Exoplanetas}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% --- Caixas de Destaque ---
+\tcbuselibrary{skins, breakable}
+
+\newtcolorbox{caixaconceito}{
+    colback=cinzaclaro,
+    colframe=azulubi,
+    fonttitle=\bfseries,
+    title=Conceito Chave,
+    breakable
+}
+
+\newtcolorbox{caixaresultado}{
+    colback=verdeconfirmed!10,
+    colframe=verdeconfirmed!70,
+    fonttitle=\bfseries,
+    title=Resultado Obtido,
+    breakable
+}
+
+\newtcolorbox{caixaatencao}{
+    colback=vermelhofalso!10,
+    colframe=vermelhofalso!70,
+    fonttitle=\bfseries,
+    title=Atenção,
+    breakable
+}
+
+% --- Formatação de Títulos ---
+\titleformat{\chapter}[display]
+    {\normalfont\huge\bfseries\color{azulubi}}
+    {\chaptertitlename\ \thechapter}{20pt}{\Huge}
+
+\titleformat{\section}
+    {\normalfont\Large\bfseries\color{azulubi}}
+    {\thesection}{1em}{}
+
+\titleformat{\subsection}
+    {\normalfont\large\bfseries\color{cinzatexto}}
+    {\thesubsection}{1em}{}
+
+% --- Configuração de Código ---
+\lstset{
+    backgroundcolor=\color{cinzaclaro},
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    rulecolor=\color{azulubi!50},
+    keywordstyle=\color{azulubi}\bfseries,
+    commentstyle=\color{cinzatexto}\itshape,
+    stringstyle=\color{verdeconfirmed!70!black},
+    language=Python,
+    showstringspaces=false,
+    numbers=left,
+    numberstyle=\tiny\color{cinzatexto},
+    numbersep=5pt
+}
+
+% =============================================================
+\begin{document}
+% =============================================================
+
+% --- Página de Título ---
+\begin{titlepage}
+    \centering
+    \vspace*{1cm}
+
+    {\Huge\bfseries\color{azulubi} ExoDetect}\\[0.5cm]
+    {\Large\color{cinzatexto} Deteção Automatizada de Exoplanetas\\com Machine Learning}\\[2cm]
+
+    \rule{\textwidth}{1pt}\\[0.5cm]
+
+    {\large
+    \textbf{Universidade da Beira Interior}\\
+    Licenciatura em Inteligência Artificial e Ciência de Dados\\[0.3cm]
+    1.º Ano — Projeto Individual\\[1cm]
+    }
+
+    \rule{\textwidth}{1pt}\\[2cm]
+
+    {\large
+    \textbf{Dataset Utilizado:} Kepler Exoplanet Search Results\\[0.3cm]
+    \textbf{Algoritmo Principal:} Random Forest Classifier\\[0.3cm]
+    \textbf{Bibliotecas:} pandas, scikit-learn, matplotlib, seaborn, shap\\[2cm]
+    }
+
+    \vfill
+
+    {\large Abril de 2026}
+
+\end{titlepage}
+
+% --- Resumo ---
+\chapter*{Resumo}
+\addcontentsline{toc}{chapter}{Resumo}
+
+Este relatório descreve o desenvolvimento completo do projeto \textbf{ExoDetect}, um sistema de inteligência artificial capaz de identificar automaticamente exoplanetas — planetas que orbitam estrelas fora do nosso Sistema Solar — a partir de dados reais recolhidos pelo telescópio espacial \textit{Kepler} da NASA.
+
+O projeto foi desenvolvido em linguagem Python e recorreu a um conjunto de ferramentas modernas de ciência de dados e aprendizagem automática. Ao longo de cinco fases distintas, foram processados e analisados dados de \textbf{9.564 observações astronómicas}, cada uma com 50 características diferentes relacionadas com o comportamento das estrelas observadas.
+
+O sistema desenvolvido atingiu uma precisão global de \textbf{90,96\%}, sendo capaz de distinguir corretamente entre planetas confirmados, candidatos a planeta e falsos positivos com um grau de confiança muito elevado.
+
+Para além da precisão dos resultados, o projeto incorpora técnicas avançadas de \textbf{explicabilidade de inteligência artificial}, permitindo compreender exatamente quais as características físicas das estrelas que mais influenciam cada decisão do modelo. Esta capacidade transforma o sistema de uma ``caixa negra'' opaca numa ferramenta científica transparente e interpretável.
+
+\vspace{0.5cm}
+\textbf{Palavras-chave:} Exoplanetas, Machine Learning, Random Forest, SHAP, Kepler, Classificação, Ciência de Dados.
+
+\newpage
+
+% --- Índice ---
+\tableofcontents
+\newpage
+
+% =============================================================
+\chapter{Introdução}
+% =============================================================
+
+\section{O Que São Exoplanetas?}
+
+Desde os primórdios da humanidade, uma das questões mais profundas que os seres humanos se colocam é: \textit{estamos sozinhos no universo?} A resposta a esta questão passa, em grande parte, pela descoberta de planetas fora do nosso Sistema Solar — os chamados \textbf{exoplanetas}.
+
+Um exoplaneta é simplesmente um planeta que orbita uma estrela diferente do nosso Sol. Durante séculos, a existência destes mundos distantes foi apenas uma hipótese teórica, uma vez que a sua deteção direta é praticamente impossível: as estrelas são tão luminosas que a luz de um planeta próximo fica completamente ofuscada.
+
+Foi necessário desenvolver métodos indiretos de deteção. O mais bem-sucedido chama-se \textbf{método do trânsito}: quando um planeta passa à frente da sua estrela (do ponto de vista da Terra), bloqueia uma pequena fração da luz dessa estrela. Este escurecimento temporário e periódico é o sinal que os telescópios detetam. É um efeito subtil — um planeta do tamanho da Terra bloqueia apenas 0,01\% da luz de uma estrela semelhante ao Sol — mas suficiente para ser medido com instrumentos modernos.
+
+\section{O Telescópio Kepler e a Missão}
+
+O telescópio espacial \textbf{Kepler} foi lançado pela NASA em 2009 com uma missão muito específica: monitorizar continuamente mais de 150.000 estrelas durante vários anos, medindo com extrema precisão a quantidade de luz emitida por cada uma delas. O objetivo era precisamente detetar esses pequenos escurecimentos periódicos causados pelo trânsito de exoplanetas.
+
+A missão Kepler foi um sucesso extraordinário. Ao longo de cerca de nove anos de operação, o telescópio acumulou uma quantidade monumental de dados astronómicos e permitiu a descoberta de milhares de exoplanetas confirmados. O dataset utilizado neste projeto — o \textit{Kepler Exoplanet Search Results} — é uma compilação pública de todas as observações catalogadas pela missão.
+
+\section{O Problema: A Escala dos Dados}
+
+O sucesso do Kepler trouxe consigo um problema de escala. Com 9.564 observações, cada uma com dezenas de características diferentes, torna-se humanamente impossível analisar cada caso individualmente com o rigor necessário. Um astrónomo experiente pode analisar manualmente algumas dezenas de observações por dia — mas o Kepler gerou dados de dezenas de milhar.
+
+É aqui que a \textbf{inteligência artificial} entra como ferramenta indispensável. Um modelo de \textit{machine learning} treinado corretamente pode analisar milhares de observações em segundos, com uma consistência que nenhum ser humano consegue manter.
+
+\section{Objetivos do Projeto}
+
+Este projeto tem três objetivos principais:
+
+\begin{enumerate}
+    \item \textbf{Construir um classificador automático} capaz de analisar as características de cada observação e prever se se trata de um exoplaneta confirmado, um candidato a exoplaneta, ou um falso positivo.
+
+    \item \textbf{Avaliar criticamente o desempenho} do modelo, não apenas com a precisão global, mas com métricas mais detalhadas que nos digam exatamente onde o sistema acerta e onde falha.
+
+    \item \textbf{Tornar a IA explicável}, utilizando técnicas avançadas que nos permitam compreender \textit{porque} o modelo toma cada decisão — combatendo o problema da ``caixa negra''.
+\end{enumerate}
+
+% =============================================================
+\chapter{Fase 1 — Configuração e Primeiro Contacto com os Dados}
+% =============================================================
+
+\section{A Importância de Conhecer os Dados}
+
+Antes de qualquer análise ou treino de modelos, é fundamental compreender com o que estamos a trabalhar. Esta fase inicial, aparentemente simples, é na verdade uma das mais importantes do projeto: um erro cometido aqui pode comprometer todas as fases seguintes.
+
+Imaginemos que um médico recebe os resultados dos exames de um paciente. Antes de fazer qualquer diagnóstico, vai primeiro verificar se os resultados estão completos, se os valores estão nas unidades corretas e se não há informações contraditórias ou em falta. O cientista de dados faz exatamente o mesmo.
+
+\section{As Ferramentas Utilizadas}
+
+Para esta fase, utilizámos as seguintes bibliotecas Python:
+
+\begin{itemize}
+    \item \textbf{pandas} — a ferramenta principal para manipulação de dados tabulares. Permite carregar ficheiros CSV e transformá-los numa estrutura chamada \textit{DataFrame}, que funciona como uma folha de cálculo super poderosa controlada por código.
+
+    \item \textbf{numpy} — biblioteca para operações matemáticas eficientes sobre grandes conjuntos de dados numéricos.
+
+    \item \textbf{matplotlib} e \textbf{seaborn} — bibliotecas de visualização gráfica, utilizadas para criar todos os gráficos do projeto.
+\end{itemize}
+
+\section{Carregamento e Dimensão do Dataset}
+
+O dataset foi carregado a partir de um ficheiro CSV (\textit{Comma-Separated Values}) — um formato de texto simples onde cada linha representa uma observação e cada coluna representa uma característica.
+
+\begin{caixaresultado}
+O dataset carregado contém \textbf{9.564 observações} (linhas) e \textbf{50 características} (colunas) por observação, totalizando 478.200 valores individuais a processar.
+\end{caixaresultado}
+
+\section{Tipos de Dados e Inspeção Inicial}
+
+Uma das primeiras verificações realizadas foi perceber de que tipo é cada coluna. Em ciência de dados, um ``tipo de dados'' refere-se à natureza da informação armazenada:
+
+\begin{itemize}
+    \item \textbf{int64} — números inteiros (sem casas decimais), como identificadores ou contagens.
+    \item \textbf{float64} — números decimais, como medições físicas (períodos orbitais, raios planetários, etc.).
+    \item \textbf{object} (texto) — cadeias de caracteres, como nomes de estrelas ou categorias.
+\end{itemize}
+
+Esta verificação é crítica porque se o Python interpretar um número como texto, qualquer operação matemática sobre ele falhará imediatamente. De 50 colunas, 39 são decimais, 6 são inteiros e 5 são texto.
+
+\section{A Coluna Alvo}
+
+A peça central de qualquer projeto de classificação é a \textbf{coluna alvo} (\textit{target}) — aquela que queremos que a inteligência artificial aprenda a prever. No nosso caso, essa coluna chama-se \texttt{koi\_disposition} e pode tomar três valores:
+
+\begin{itemize}
+    \item \textcolor{verdeconfirmed}{\textbf{CONFIRMED}} — exoplaneta confirmado por múltiplos métodos de verificação.
+    \item \textcolor{azulcandidate}{\textbf{CANDIDATE}} — observação promissora que ainda aguarda confirmação.
+    \item \textcolor{vermelhofalso}{\textbf{FALSE POSITIVE}} — sinal que inicialmente pareceu um planeta mas foi descartado.
+\end{itemize}
+
+% =============================================================
+\chapter{Fase 2 — Análise Exploratória de Dados}
+% =============================================================
+
+\section{Fazer os Dados Falar}
+
+A Análise Exploratória de Dados, conhecida pelo acrónimo inglês \textbf{EDA} (\textit{Exploratory Data Analysis}), é o processo de utilizar estatística e visualização gráfica para ganhar intuição sobre os dados antes de os fornecer a qualquer algoritmo.
+
+A IA é fundamentalmente cega: ela processa números, mas não tem qualquer sentido físico sobre o que esses números representam. O papel do cientista de dados é usar o conhecimento humano para identificar padrões, anomalias e relações nos dados — e depois transmitir esse conhecimento ao modelo de forma implícita, através das escolhas que faz durante o pré-processamento.
+
+\section{Desequilíbrio de Classes}
+
+O primeiro e mais crítico problema identificado foi o \textbf{desequilíbrio de classes}. Quando analisámos a distribuição dos três tipos de observação, obtivemos os seguintes números:
+
+\begin{table}[h]
+\centering
+\caption{Distribuição das classes no dataset Kepler}
+\begin{tabular}{lrr}
+\toprule
+\textbf{Classe} & \textbf{Observações} & \textbf{Percentagem} \\
+\midrule
+FALSE POSITIVE & 5.023 & 52,5\% \\
+CONFIRMED & 2.293 & 24,0\% \\
+CANDIDATE & 2.248 & 23,5\% \\
+\midrule
+\textbf{Total} & \textbf{9.564} & \textbf{100\%} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{caixaatencao}
+Mais de metade do dataset é composto por Falsos Positivos. Este desequilíbrio representa um risco sério: um modelo de inteligência artificial pode tornar-se ``preguiçoso'' e aprender que, ao classificar sempre como FALSE POSITIVE, consegue acertar em 52,5\% dos casos sem aprender absolutamente nada sobre os planetas reais. É como um aluno que, sabendo que metade das perguntas de um teste têm a resposta ``C'', marca ``C'' em tudo sem estudar.
+\end{caixaatencao}
+
+Este problema é conhecido na literatura científica como \textit{class imbalance} e é um dos desafios mais comuns em projetos de classificação com dados reais. A sua identificação precoce permite adotar estratégias para o mitigar nas fases seguintes.
+
+\section{Histogramas das Características Físicas}
+
+Para compreender quais as características dos dados que mais distinguem as três classes, analisámos a distribuição de quatro variáveis físicas fundamentais:
+
+\begin{itemize}
+    \item \textbf{koi\_period} — período orbital em dias. Representa o tempo que o planeta demora a completar uma volta à sua estrela. Por comparação, a Terra tem um período orbital de 365 dias.
+
+    \item \textbf{koi\_depth} — profundidade do trânsito em partes por milhão (ppm). Mede a fração da luz da estrela que é bloqueada pelo planeta durante o trânsito. Um valor maior indica um planeta maior.
+
+    \item \textbf{koi\_prad} — raio estimado do planeta em raios terrestres. Por exemplo, um valor de 11 indica um planeta com o raio 11 vezes maior do que a Terra (semelhante a Júpiter).
+
+    \item \textbf{koi\_model\_snr} — relação sinal-ruído do modelo. Mede a ``clareza'' do sinal detetado. Um valor alto indica um sinal limpo e confiável; um valor baixo pode indicar ruído instrumental ou interferência de outros corpos celestes.
+\end{itemize}
+
+A análise dos histogramas revelou uma descoberta importante: a \textbf{relação sinal-ruído (SNR)} é a característica que mais claramente separa as três classes. Os planetas confirmados tendem a apresentar valores de SNR mais elevados — os seus sinais são mais limpos e inequívocos. Os falsos positivos, por outro lado, concentram-se em valores de SNR mais baixos, onde o sinal é ambíguo e mais facilmente confundível com ruído instrumental.
+
+Esta descoberta faz sentido físico: um sinal forte e periódico é muito mais provável de ser causado por um planeta real do que por flutuações aleatórias no brilho da estrela.
+
+\section{Matriz de Correlação}
+
+O terceiro passo da análise exploratória consistiu em calcular a \textbf{matriz de correlação} entre todas as variáveis numéricas do dataset. Esta matriz é visualizada como um ``mapa de calor'' onde cada célula representa a relação entre duas variáveis.
+
+\begin{caixaconceito}
+A \textbf{correlação} é uma medida estatística que varia entre -1 e +1:
+\begin{itemize}
+    \item \textbf{+1} — as duas variáveis aumentam sempre juntas (correlação positiva perfeita).
+    \item \textbf{0} — não existe qualquer relação entre as variáveis.
+    \item \textbf{-1} — quando uma variável aumenta, a outra diminui sempre (correlação negativa perfeita).
+\end{itemize}
+\end{caixaconceito}
+
+A análise revelou vários pares de variáveis com correlação muito próxima de -1,00 ou +1,00. O padrão mais claro envolveu as colunas de erro: cada medição física no dataset Kepler vem acompanhada de dois valores de erro — \texttt{\_err1} (erro positivo, para cima) e \texttt{\_err2} (erro negativo, para baixo). Por serem matematicamente simétricas, estas colunas são espelhos uma da outra e contêm exatamente a mesma informação. Manter ambas seria redundante e sobrecarregaria desnecessariamente o modelo.
+
+Descobriu-se também uma correlação inesperada entre o identificador numérico das estrelas (\texttt{kepid}) e a sua posição no céu (\texttt{dec} — declinação). Esta correlação existe porque o telescópio Kepler observou uma zona fixa do céu e as estrelas foram catalogadas sequencialmente por posição. No entanto, o número de identificação de uma estrela não tem qualquer relevância física para determinar se tem um planeta — é apenas um código de arquivo.
+
+% =============================================================
+\chapter{Fase 3 — Pré-processamento e Limpeza dos Dados}
+% =============================================================
+
+\section{A Fase Mais Importante do Projeto}
+
+Na indústria da ciência de dados existe um princípio fundamental, frequentemente citado como \textit{``Garbage In, Garbage Out''} — Lixo que Entra, Lixo que Sai. Por mais sofisticado que seja o algoritmo de aprendizagem automática utilizado, se os dados fornecidos forem de má qualidade, os resultados serão inevitavelmente pobres e pouco fiáveis.
+
+É por isso que, na prática profissional, os cientistas de dados dedicam tipicamente \textbf{70 a 80\% do seu tempo} a esta fase de preparação e limpeza dos dados — e apenas os restantes 20 a 30\% ao treino efetivo dos modelos.
+
+\section{Remoção de Colunas Irrelevantes}
+
+O primeiro passo consistiu em identificar e eliminar todas as colunas que não contribuem para a previsão de exoplanetas. Foram eliminadas três categorias de colunas:
+
+\textbf{Colunas de identificação:} \texttt{rowid}, \texttt{kepid}, \texttt{kepoi\_name}, \texttt{kepler\_name}. São identificadores de arquivo que não têm qualquer relação com as leis físicas que governam a deteção de planetas. O número de catálogo de uma estrela não influencia se ela tem ou não um planeta.
+
+\textbf{Colunas de texto redundantes:} \texttt{koi\_pdisposition} e \texttt{koi\_tce\_delivname}. A coluna \texttt{koi\_pdisposition} é uma versão preliminar da própria coluna alvo — fornecê-la ao modelo seria equivalente a dar-lhe a resposta durante o ``exame''.
+
+\textbf{Colunas de erro duplicadas:} todas as colunas terminadas em \texttt{\_err2}, que são espelhos das colunas \texttt{\_err1} identificadas na análise de correlação.
+
+\textbf{Colunas completamente vazias:} \texttt{koi\_teq\_err1} e \texttt{koi\_teq\_err2}, que não contêm um único valor em todo o dataset.
+
+\begin{caixaresultado}
+Após a remoção, o dataset passou de \textbf{50 para 32 colunas}, eliminando 18 fontes de ruído e redundância sem perder qualquer informação física relevante.
+\end{caixaresultado}
+
+\section{Tratamento de Valores Nulos}
+
+Os dados reais são raramente perfeitos. Os telescópios falham, os instrumentos têm limitações, e algumas medições simplesmente não são possíveis em determinadas condições. O resultado são os chamados \textbf{valores nulos} ou \textbf{NaN} (\textit{Not a Number}) — buracos no dataset onde não existe informação.
+
+Após a remoção das colunas irrelevantes, identificámos valores nulos em 22 das 32 colunas restantes. O caso mais grave era a coluna \texttt{koi\_score}, com 1.510 valores em falta — o que representa 15,8\% do total de observações.
+
+Perante valores nulos, um cientista de dados tem essencialmente duas opções:
+
+\begin{enumerate}
+    \item \textbf{Eliminar as linhas} com valores nulos (\texttt{dropna()}): simples de implementar, mas destrutivo. No nosso caso, eliminaríamos até 1.510 observações, perdendo dados potencialmente valiosos.
+
+    \item \textbf{Imputar os valores em falta} com um valor estatístico representativo: preserva todas as observações ao custo de introduzir uma estimativa onde havia um buraco.
+\end{enumerate}
+
+Optámos pela \textbf{imputação pela mediana}. A mediana é o valor central de uma coluna quando todos os seus valores são ordenados do menor para o maior. A sua grande vantagem em relação à média aritmética é a sua \textbf{robustez a valores extremos}: se uma coluna tiver a maioria dos valores entre 0 e 100, mas alguns valores excecionais na casa dos milhões, a média ficaria distorcida por esses extremos, enquanto a mediana permaneceria representativa da maioria.
+
+\begin{caixaconceito}
+Exemplo intuitivo da diferença entre média e mediana:\\
+Considere os salários de 5 pessoas: 800€, 900€, 950€, 1.000€ e 50.000€.\\
+\textbf{Média:} (800 + 900 + 950 + 1000 + 50000) / 5 = \textbf{10.730€} — distorcida pelo valor extremo.\\
+\textbf{Mediana:} o valor central = \textbf{950€} — representativa da maioria.
+\end{caixaconceito}
+
+\begin{caixaresultado}
+Após a imputação pela mediana, o dataset ficou com \textbf{zero valores nulos}, mantendo todas as 9.564 observações intactas.
+\end{caixaresultado}
+
+\section{Normalização das Características}
+
+O último passo do pré-processamento foi a \textbf{normalização} (ou escalonamento) das variáveis numéricas. Este passo resolve um problema subtil mas potencialmente grave: as diferentes características do dataset estão medidas em escalas completamente diferentes.
+
+Por exemplo:
+\begin{itemize}
+    \item A coluna \texttt{koi\_period} (período orbital) tem valores que vão de 0,24 a 129.995 dias.
+    \item A coluna \texttt{koi\_impact} (parâmetro de impacto) tem valores entre 0 e 1.
+\end{itemize}
+
+Se fornecermos estes dados diretamente ao modelo, este pode erroneamente concluir que o período orbital é mais importante do que o parâmetro de impacto, simplesmente porque os seus valores numéricos são muito maiores — e não porque tenha descoberto uma relação física real.
+
+Para resolver este problema, utilizámos o \textbf{MinMaxScaler} da biblioteca scikit-learn, que aplica a seguinte transformação matemática a cada valor:
+
+\begin{equation}
+    x_{\text{normalizado}} = \frac{x - x_{\text{mínimo}}}{x_{\text{máximo}} - x_{\text{mínimo}}}
+\end{equation}
+
+Esta fórmula garante que:
+\begin{itemize}
+    \item O valor mínimo de cada coluna é transformado em \textbf{0}.
+    \item O valor máximo de cada coluna é transformado em \textbf{1}.
+    \item Todos os valores intermédios ficam proporcionalmente distribuídos entre 0 e 1.
+\end{itemize}
+
+O denominador ($x_{\text{máximo}} - x_{\text{mínimo}}$) é chamado de \textbf{intervalo} da coluna, e é sempre maior ou igual ao numerador, garantindo matematicamente que o resultado nunca ultrapassa 1 nem é inferior a 0.
+
+% =============================================================
+\chapter{Fase 4 — Treino e Avaliação do Modelo}
+% =============================================================
+
+\section{A Divisão Treino/Teste}
+
+Antes de treinar qualquer modelo de inteligência artificial, é necessário resolver um problema fundamental: como sabemos se o modelo \textit{realmente aprendeu} a identificar exoplanetas, ou se simplesmente \textit{memorizou} os dados de treino?
+
+A analogia com o sistema de ensino é perfeita: se um professor der aos alunos as perguntas exatas do exame antes da prova, estes podem memorizar as respostas sem compreender absolutamente nada da matéria. No dia de um exame diferente, falhariam. O mesmo acontece com a inteligência artificial.
+
+Para evitar este problema, adotámos a estratégia de \textbf{divisão treino/teste}: antes de qualquer treino, separámos o dataset em dois grupos completamente distintos:
+
+\begin{itemize}
+    \item \textbf{Conjunto de treino (80\%)} — 7.651 observações que o modelo pode estudar e aprender.
+    \item \textbf{Conjunto de teste (20\%)} — 1.913 observações que são completamente escondidas do modelo durante o treino, e só utilizadas na avaliação final.
+\end{itemize}
+
+Uma consideração técnica importante foi o uso do parâmetro \texttt{stratify}: ao dividir o dataset, garantimos que a proporção das três classes (CONFIRMED, CANDIDATE, FALSE POSITIVE) é mantida tanto no conjunto de treino como no de teste. Sem este cuidado, poderíamos acabar com um conjunto de teste com muito mais falsos positivos do que o esperado, tornando a avaliação pouco representativa.
+
+\section{O Algoritmo Random Forest}
+
+O algoritmo escolhido para este projeto foi o \textbf{Random Forest} (\textit{Floresta Aleatória}). Para compreender como funciona, precisamos primeiro de entender o conceito de \textbf{Árvore de Decisão}.
+
+\subsection{Árvores de Decisão}
+
+Uma árvore de decisão é uma sequência de perguntas do tipo ``sim ou não'' que, ao serem respondidas, levam a uma conclusão. Por exemplo:
+
+\begin{enumerate}
+    \item \textit{``O sinal-ruído (SNR) é maior que 15?''} → Sim
+    \item \textit{``O período orbital é menor que 50 dias?''} → Sim
+    \item \textit{``O raio do planeta é menor que 5 raios terrestres?''} → Sim
+    \item \textbf{Conclusão: CONFIRMED}
+\end{enumerate}
+
+O modelo aprende automaticamente quais as perguntas mais úteis e em que ordem fazê-las, através do processamento dos dados de treino.
+
+O problema das árvores de decisão individuais é que tendem a \textit{sobreajustar} os dados — aprendem os padrões de treino com demasiado detalhe, incluindo o ruído e as exceções, e depois generalizam mal para dados novos.
+
+\subsection{A Floresta Aleatória}
+
+O Random Forest resolve este problema com uma solução elegante baseada num princípio estatístico poderoso: a \textbf{sabedoria das multidões}.
+
+Em vez de treinar uma única árvore de decisão, treina-se \textbf{500 árvores independentes}. Cada árvore é treinada com uma amostra ligeiramente diferente dos dados e usando um subconjunto aleatório das características disponíveis. Esta diversidade deliberada garante que as árvores cometam erros \textit{diferentes}.
+
+Quando o modelo precisa de classificar uma nova observação, todas as 500 árvores votam na sua classificação. A classe com mais votos vence. Como é muito improvável que a maioria das árvores cometa o mesmo erro ao mesmo tempo, o resultado coletivo é muito mais fiável do que qualquer árvore individual.
+
+A analogia com a medicina é útil: em vez de consultar um único médico, consulta-se 500 especialistas independentes e aceita-se o diagnóstico que a maioria defende.
+
+\begin{caixaresultado}
+O modelo Random Forest foi treinado com sucesso com \textbf{500 árvores de decisão} e \textbf{31 características} por observação.
+\end{caixaresultado}
+
+\section{Avaliação do Desempenho}
+
+A avaliação de um modelo de classificação vai muito além de uma simples percentagem de acertos. Para compreender verdadeiramente o desempenho do sistema, utilizámos um conjunto de métricas complementares.
+
+\subsection{Accuracy (Precisão Global)}
+
+A \textit{accuracy} é a métrica mais intuitiva: a percentagem de observações classificadas corretamente.
+
+\begin{caixaresultado}
+O modelo atingiu uma \textbf{accuracy de 90,96\%} no conjunto de teste — acertando em 9 de cada 10 classificações.
+\end{caixaresultado}
+
+Embora impressionante, a \textit{accuracy} por si só pode ser enganosa com datasets desequilibrados. Um modelo que dissesse sempre ``FALSE POSITIVE'' teria uma \textit{accuracy} de 52,5\% sem aprender absolutamente nada.
+
+\subsection{Precision e Recall}
+
+Para cada classe, calculámos duas métricas complementares:
+
+\begin{itemize}
+    \item \textbf{Precision (Precisão):} de todas as observações que o modelo classificou como pertencendo a uma determinada classe, qual a percentagem que realmente pertence a essa classe? Mede a confiança das afirmações positivas do modelo.
+
+    \item \textbf{Recall (Abrangência):} de todas as observações que realmente pertencem a uma determinada classe, qual a percentagem que o modelo conseguiu identificar corretamente? Mede a capacidade do modelo de não deixar escapar casos reais.
+\end{itemize}
+
+No contexto da astronomia, o \textbf{Recall} é particularmente crítico para a classe CONFIRMED: um planeta confirmado que o modelo falhe representa uma oportunidade científica perdida e potencialmente recursos desperdiçados.
+
+\begin{table}[h]
+\centering
+\caption{Resultados detalhados de avaliação do modelo}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Classe} & \textbf{Precision} & \textbf{Recall} & \textbf{F1-Score} & \textbf{Suporte} \\
+\midrule
+CANDIDATE & 0,83 & 0,80 & 0,81 & 449 \\
+CONFIRMED & 0,83 & 0,85 & 0,84 & 459 \\
+FALSE POSITIVE & 0,98 & 0,99 & 0,98 & 1.005 \\
+\midrule
+\textbf{Média Global} & \textbf{0,91} & \textbf{0,91} & \textbf{0,91} & \textbf{1.913} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+A análise dos resultados revela padrões importantes:
+
+\textbf{FALSE POSITIVE} apresenta os melhores resultados (Precision 0,98 e Recall 0,99), o que era esperado: é a classe maioritária, com padrões mais bem definidos e mais exemplos de treino disponíveis.
+
+\textbf{CONFIRMED} tem um Recall de 0,85, o que significa que o modelo conseguiu identificar 85\% de todos os planetas confirmados presentes no conjunto de teste. Os restantes 15\% foram erroneamente classificados noutra categoria — principalmente como CANDIDATE.
+
+\textbf{CANDIDATE} é a classe com desempenho mais baixo (Recall 0,80), o que faz sentido físico: os candidatos são por definição as observações mais ambíguas, com características que se sobrepõem com as das outras duas classes. São os casos borderline, onde mesmo os astrónomos humanos têm dificuldade em chegar a uma conclusão.
+
+\subsection{Matriz de Confusão}
+
+A matriz de confusão é uma ferramenta de visualização que permite compreender exatamente onde o modelo acerta e onde falha. Organiza as previsões numa tabela onde:
+
+\begin{itemize}
+    \item As \textbf{linhas} representam a classe real de cada observação.
+    \item As \textbf{colunas} representam a classe prevista pelo modelo.
+    \item A \textbf{diagonal principal} mostra os acertos — onde a classe real coincide com a classe prevista.
+    \item Os valores \textbf{fora da diagonal} representam os erros.
+\end{itemize}
+
+A análise da matriz revelou que o erro mais frequente do modelo foi classificar \textbf{79 observações CANDIDATE como CONFIRMED}. Este é um erro compreensível: os candidatos com características mais sólidas são facilmente confundidos com planetas confirmados, especialmente quando o sinal-ruído é elevado. Na prática, estes ``erros'' podem até ser úteis — identificam os candidatos com maior probabilidade de vir a ser confirmados, tornando-se candidatos prioritários para observações de seguimento.
+
+% =============================================================
+\chapter{Fase 5 — Explicabilidade da Inteligência Artificial}
+% =============================================================
+
+\section{O Problema da Caixa Negra}
+
+Os modelos modernos de aprendizagem automática, especialmente os mais complexos como o Random Forest, enfrentam uma crítica fundamental: funcionam como \textbf{caixas negras}. Fornecem resultados precisos, mas não explicam o raciocínio por trás de cada decisão.
+
+Esta opacidade é problemática em contextos científicos e de alto impacto. Na astronomia, dizer ``o meu modelo diz que isto é um planeta'' não é suficiente — é necessário poder justificar a classificação com base em princípios físicos observáveis. Da mesma forma, em medicina, finanças ou justiça, as decisões tomadas por sistemas de IA precisam de ser auditáveis e compreensíveis.
+
+A área científica que estuda este problema chama-se \textbf{XAI} (\textit{Explainable Artificial Intelligence}) — Inteligência Artificial Explicável. O objetivo é desenvolver técnicas que permitam ``abrir'' a caixa negra e compreender como o modelo chega às suas conclusões.
+
+\section{A Biblioteca SHAP}
+
+Para tornar o nosso modelo explicável, utilizámos a biblioteca \textbf{SHAP} (\textit{SHapley Additive exPlanations}). O SHAP baseia-se na \textbf{Teoria dos Jogos Cooperativos}, especificamente no conceito de valores de Shapley, desenvolvido pelo matemático Lloyd Shapley nos anos 1950 (pelo qual recebeu o Prémio Nobel da Economia em 2012).
+
+A ideia central é elegante: imagina um jogo de futebol onde a equipa marcou 3 golos. Como se distribui o crédito pela vitória entre os 11 jogadores? Cada jogador contribuiu de forma diferente, e essa contribuição depende com que outros jogadores estava a jogar. Os valores de Shapley calculam a contribuição justa de cada ``jogador'' (no nosso caso, cada característica dos dados) para o resultado final.
+
+No contexto do nosso modelo:
+\begin{itemize}
+    \item Cada \textbf{característica} (SNR, período orbital, raio do planeta, etc.) é um ``jogador''.
+    \item A \textbf{classificação} do modelo (CONFIRMED, CANDIDATE, FALSE POSITIVE) é o ``resultado do jogo''.
+    \item O SHAP calcula quanto cada característica contribuiu para aquela classificação específica.
+\end{itemize}
+
+\section{Importância Global das Características}
+
+O primeiro resultado do SHAP foi um \textbf{gráfico de importância global}: um ranking das características ordenadas pela sua influência média nas decisões do modelo, ao longo de todas as 1.913 observações de teste.
+
+As três características mais importantes identificadas foram:
+
+\begin{enumerate}
+    \item \textbf{koi\_score} — A pontuação de confiança calculada pela própria NASA para cada observação. Esta métrica resume em si uma análise complexa feita pelos sistemas automáticos do projeto Kepler, combinando vários indicadores numa única pontuação. O facto de ser a característica mais importante confirma que a NASA desenvolveu uma métrica extremamente eficaz.
+
+    \item \textbf{koi\_model\_snr} — A relação sinal-ruído, que já tínhamos identificado na Fase 2 (EDA) como a característica que melhor separava visualmente as classes nos histogramas. O SHAP confirmou matematicamente o que a nossa análise visual sugeria — uma validação importante que demonstra a coerência entre a análise humana e a aprendizagem automática.
+
+    \item \textbf{koi\_steff\_err1} — O erro na medição da temperatura efetiva da estrela. Curiosamente, não é a temperatura em si, mas a \textit{incerteza} nessa medição. Estrelas com medições de temperatura muito imprecisas tendem a ter observações menos fiáveis em geral, o que o modelo aprendeu a associar a classificações mais incertas.
+\end{enumerate}
+
+\begin{caixaresultado}
+A análise de importância global revelou uma \textbf{validação cruzada} entre a análise humana (EDA) e a aprendizagem automática: o SNR, identificado visualmente como a melhor feature separadora na Fase 2, foi confirmado pelo SHAP como a segunda característica mais importante para o modelo. Esta coerência demonstra que o modelo aprendeu padrões físicos reais, e não artefactos estatísticos.
+\end{caixaresultado}
+
+\section{Explicação Local — Uma Estrela Específica}
+
+A segunda análise SHAP foi ainda mais detalhada e poderosa: a \textbf{explicação local}. Em vez de analisar o comportamento médio do modelo sobre todas as observações, focámo-nos numa única estrela específica do conjunto de teste e perguntámos ao modelo: \textit{``Porque é que classificaste esta observação como CONFIRMED?''}
+
+O SHAP respondeu com um \textbf{gráfico waterfall} (cascata), que mostra:
+
+\begin{itemize}
+    \item O \textbf{valor base} — a probabilidade média de qualquer observação ser CONFIRMED, sem considerar nenhuma característica específica.
+    \item A \textbf{contribuição de cada característica} — o quanto cada variável aumentou ou diminuiu a probabilidade de classificação como CONFIRMED para esta observação específica.
+    \item O \textbf{valor final} — a probabilidade resultante após somar todas as contribuições.
+\end{itemize}
+
+No gráfico obtido, \textbf{todas as barras eram vermelhas}, indicando que todas as características da estrela analisada contribuíam positivamente para a classificação como CONFIRMED. A característica com maior contribuição foi, novamente, o \texttt{koi\_score} — a observação tinha uma pontuação de confiança muito elevada, o que por si só seria quase suficiente para a classificar como planeta confirmado.
+
+Esta capacidade de explicar \textit{individualmente} cada decisão é o que transforma o modelo de uma caixa negra num instrumento científico transparente e auditável.
+
+% =============================================================
+\chapter{Conclusão}
+% =============================================================
+
+\section{Síntese do Trabalho Desenvolvido}
+
+O projeto ExoDetect demonstrou que é possível construir um sistema de inteligência artificial capaz de identificar exoplanetas com um grau de precisão muito elevado, a partir de dados astronómicos reais. Ao longo de cinco fases estruturadas, foram abordados todos os aspetos essenciais de um projeto de ciência de dados:
+
+\begin{table}[h]
+\centering
+\caption{Resumo das cinco fases do projeto}
+\begin{tabular}{>{\bfseries}p{0.15\textwidth}p{0.75\textwidth}}
+\toprule
+Fase & Trabalho Realizado \\
+\midrule
+Fase 1 & Carregamento e inspeção de 9.564 observações com 50 características; identificação da coluna alvo. \\
+\addlinespace
+Fase 2 & Identificação do desequilíbrio de classes; análise de histogramas físicos; detecção de redundâncias por correlação. \\
+\addlinespace
+Fase 3 & Redução de 50 para 32 colunas; eliminação de todos os valores nulos por imputação mediana; normalização MinMaxScaler. \\
+\addlinespace
+Fase 4 & Treino de Random Forest com 500 árvores; avaliação com accuracy de 90,96\%; análise de Precision, Recall e Matriz de Confusão. \\
+\addlinespace
+Fase 5 & Aplicação de SHAP para identificação das features mais importantes e explicação individual de classificações. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Principais Descobertas}
+
+O projeto permitiu identificar três descobertas científicas relevantes:
+
+\textbf{1. O SNR como preditor principal de exoplanetas.} Tanto a análise visual (EDA) como a análise matemática (SHAP) convergiram para a mesma conclusão: a relação sinal-ruído é a característica física que mais discrimina planetas reais de falsos positivos. Isto está em linha com o conhecimento astronómico estabelecido — sinais limpos e consistentes são a assinatura de trânsitos planetários reais.
+
+\textbf{2. A dificuldade inerente dos candidatos.} O modelo atingiu um Recall de 80\% na classe CANDIDATE — o mais baixo das três classes. Este resultado não é uma falha do modelo, mas um reflexo da realidade astronómica: os candidatos são, por definição, as observações mais ambíguas, onde a evidência disponível não é suficiente para uma conclusão definitiva.
+
+\textbf{3. A coerência entre intuição humana e aprendizagem automática.} As características identificadas como importantes pela análise exploratória humana (Fase 2) foram confirmadas pelo SHAP (Fase 5) como as mais influentes nas decisões do modelo. Esta coerência valida tanto a metodologia de análise exploratória como a integridade do processo de aprendizagem automática.
+
+\section{Impacto e Aplicações Futuras}
+
+O sistema desenvolvido, embora construído com fins académicos, demonstra o potencial real da inteligência artificial na astronomia observacional. Com algumas extensões, poderia ser utilizado para:
+
+\begin{itemize}
+    \item \textbf{Priorização de observações de seguimento}: identificar automaticamente quais os candidatos com maior probabilidade de confirmação, otimizando o uso de telescópios de confirmação — recursos extremamente limitados e caros.
+
+    \item \textbf{Aplicação a missões futuras}: as metodologias desenvolvidas são transferíveis para dados de outras missões de caça a exoplanetas, como o telescópio espacial TESS da NASA, que está atualmente em operação.
+
+    \item \textbf{Análise em tempo real}: com otimizações de desempenho, o sistema poderia processar novas observações em tempo real à medida que chegam do telescópio, acelerando o ciclo de descoberta científica.
+\end{itemize}
+
+\section{Reflexão Final}
+
+Este projeto ilustra uma lição fundamental da ciência de dados moderna: a inteligência artificial é mais poderosa quando é usada em \textit{parceria} com o conhecimento humano, e não como substituto dele. O cientista de dados trouxe intuição física sobre o problema astronómico (Fase 2), tomou decisões metodológicas fundamentadas (Fase 3), e interpretou os resultados no contexto do domínio (Fase 4 e 5). O algoritmo trouxe capacidade de processamento e identificação de padrões a uma escala impossível para um ser humano.
+
+A explicabilidade — implementada através do SHAP — foi o elemento que fechou este ciclo, permitindo que os resultados da IA fossem comunicados de forma transparente e verificável. Um modelo que acerta 91\% das vezes mas não explica o seu raciocínio é cientificamente menos valioso do que um modelo ligeiramente menos preciso mas completamente transparente.
+
+O projeto ExoDetect é, portanto, mais do que um exercício técnico: é uma demonstração de como a inteligência artificial pode ser usada de forma responsável, transparente e científicamente rigorosa na fronteira do conhecimento humano.
+
+% =============================================================
+\chapter*{Referências}
+\addcontentsline{toc}{chapter}{Referências}
+% =============================================================
+
+\begin{enumerate}
+    \item NASA Exoplanet Archive. \textit{Kepler Objects of Interest (KOI) Table}. Disponível em: \url{https://exoplanetarchive.ipac.caltech.edu/}
+
+    \item Borucki, W. J. et al. (2010). \textit{Kepler Planet-Detection Mission: Introduction and First Results}. Science, 327(5968), 977-980.
+
+    \item Breiman, L. (2001). \textit{Random Forests}. Machine Learning, 45(1), 5-32.
+
+    \item Lundberg, S. M., \& Lee, S. I. (2017). \textit{A Unified Approach to Interpreting Model Predictions}. Advances in Neural Information Processing Systems, 30.
+
+    \item Shapley, L. S. (1953). \textit{A Value for n-Person Games}. Contributions to the Theory of Games, 2, 307-317.
+
+    \item Pedregosa, F. et al. (2011). \textit{Scikit-learn: Machine Learning in Python}. Journal of Machine Learning Research, 12, 2825-2830.
+
+    \item McKinney, W. (2010). \textit{Data Structures for Statistical Computing in Python}. Proceedings of the 9th Python in Science Conference, 56-61.
+
+    \item Thompson, S. E. et al. (2018). \textit{Planetary Candidates Observed by Kepler. VIII. A Fully Automated Catalog Based on Data Release 25}. The Astrophysical Journal Supplement Series, 235(2), 38.
+\end{enumerate}
+
+% =============================================================
+\end{document}
+% =============================================================
