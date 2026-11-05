@@ -10,31 +10,33 @@ O Kepler observou milhares de estrelas à procura de quedas de brilho causadas p
 
 ## Resultados
 
-9 564 observações · 50 colunas originais, 31 usadas no treino · divisão 80/20 estratificada · 500 árvores · `random_state=42`
+9 564 observações · 50 colunas originais, 26 usadas no treino · divisão 80/20 estratificada · 500 árvores · `random_state=42`
 
 | Classe | Precision | Recall | F1 | Suporte |
 |---|---|---|---|---|
-| CANDIDATE | 0.83 | 0.80 | 0.81 | 449 |
-| CONFIRMED | 0.83 | 0.85 | 0.84 | 459 |
-| FALSE POSITIVE | 0.98 | 0.99 | 0.98 | 1 005 |
-| **Accuracy** | | | **90.96%** | 1 913 |
+| CANDIDATE | 0.66 | 0.46 | 0.54 | 449 |
+| CONFIRMED | 0.81 | 0.85 | 0.83 | 459 |
+| FALSE POSITIVE | 0.83 | 0.92 | 0.87 | 1 005 |
+| **Accuracy** | | | **79.30%** | 1 913 |
+
+Os candidatos são a classe mais difícil (recall 0.46), o que faz sentido: são, por definição, os casos ambíguos. O erro mais frequente é classificar candidatos como falsos positivos (172 casos).
 
 ### Nota metodológica — fuga de informação
 
-O treino inclui `koi_score` e as quatro colunas `koi_fpflag_*`. Estas são saídas do próprio processo de validação do Kepler, ou seja, estão muito próximas da resposta que o modelo tenta prever. Ao repetir o treino sem elas (mesmo pipeline, mesma semente):
+A primeira versão do projeto treinava também com `koi_score` e as quatro colunas `koi_fpflag_*`. Estas são saídas do próprio processo de validação do Kepler, ou seja, estão muito próximas da resposta que o modelo tenta prever. Foram removidas, e o notebook e o relatório foram atualizados. Comparação (mesmo pipeline, mesma semente):
 
 | | Accuracy | Recall CANDIDATE | Recall CONFIRMED | Recall FALSE POSITIVE |
 |---|---|---|---|---|
-| Como no notebook (31 colunas) | 90.96% | 0.80 | 0.85 | 0.99 |
-| Sem `koi_score` e `koi_fpflag_*` (26 colunas) | 79.30% | 0.46 | 0.85 | 0.92 |
+| Primeira versão, com fuga de informação (31 colunas) | 90.96% | 0.80 | 0.85 | 0.99 |
+| **Versão atual**, sem `koi_score` nem `koi_fpflag_*` (26 colunas) | 79.30% | 0.46 | 0.85 | 0.92 |
 
-O número mais honesto sobre o que o modelo aprende só a partir das propriedades físicas do sinal é o segundo. Os candidatos continuam a ser a classe mais difícil, o que faz sentido: são, por definição, os casos ambíguos.
+O segundo número é o que mede o que o modelo aprende só a partir das propriedades do sinal. Na análise SHAP, as características mais influentes para a classe CONFIRMED são agora `koi_steff_err1`, `koi_duration_err1` e `koi_model_snr`; as duas primeiras são incertezas de medição, o que mostra que o modelo também usa a qualidade da medição como pista.
 
 ## O que o projeto faz, por fases
 
 1. **Configuração e inspeção** — carregamento do dataset, tipos de dados, escolha da coluna alvo (`koi_disposition`).
 2. **Análise exploratória** — desequilíbrio de classes, histogramas das características físicas, matriz de correlação.
-3. **Pré-processamento** — remoção de identificadores e de colunas `_err2` (espelhos das `_err1`, correlação −1), imputação de nulos pela mediana, normalização MinMax.
+3. **Pré-processamento** — remoção de identificadores, de colunas `_err2` (espelhos das `_err1`, correlação −1) e de colunas com fuga de informação (`koi_score`, `koi_fpflag_*`), imputação de nulos pela mediana, normalização MinMax.
 4. **Treino e avaliação** — Random Forest, precision/recall/F1 por classe, matriz de confusão.
 5. **Explicabilidade** — SHAP global (que características pesam mais) e local (porque uma estrela concreta foi classificada assim).
 
