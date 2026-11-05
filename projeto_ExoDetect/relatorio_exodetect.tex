@@ -163,7 +163,11 @@ Este relatório descreve o desenvolvimento completo do projeto \textbf{ExoDetect
 
 O projeto foi desenvolvido em linguagem Python e recorreu a um conjunto de ferramentas modernas de ciência de dados e aprendizagem automática. Ao longo de cinco fases distintas, foram processados e analisados dados de \textbf{9.564 observações astronómicas}, cada uma com 50 características diferentes relacionadas com o comportamento das estrelas observadas.
 
-O sistema desenvolvido atingiu uma precisão global de \textbf{90,96\%}, sendo capaz de distinguir corretamente entre planetas confirmados, candidatos a planeta e falsos positivos com um grau de confiança muito elevado.
+O sistema desenvolvido atingiu uma precisão global de \textbf{79,30\%} no conjunto de teste, com bom desempenho a identificar planetas confirmados (Recall de 85\%) e falsos positivos (Recall de 92\%), e mais dificuldade nos candidatos (Recall de 46\%), que são, por natureza, as observações mais ambíguas.
+
+\begin{caixaatencao}
+\textbf{Nota de revisão (novembro de 2026).} Numa versão anterior deste relatório, o modelo usava também a pontuação \texttt{koi\_score} e as quatro \textit{flags} \texttt{koi\_fpflag\_*}. Estas colunas são saídas do próprio processo de validação do Kepler e antecipam a resposta que o modelo devia prever (fuga de informação, ou \textit{data leakage}). Com elas, a accuracy era 90,96\%; sem elas, é 79,30\%. Este relatório foi corrigido em conformidade.
+\end{caixaatencao}
 
 Para além da precisão dos resultados, o projeto incorpora técnicas avançadas de \textbf{explicabilidade de inteligência artificial}, permitindo compreender exatamente quais as características físicas das estrelas que mais influenciam cada decisão do modelo. Esta capacidade transforma o sistema de uma ``caixa negra'' opaca numa ferramenta científica transparente e interpretável.
 
@@ -347,30 +351,32 @@ Na indústria da ciência de dados existe um princípio fundamental, frequenteme
 
 \section{Remoção de Colunas Irrelevantes}
 
-O primeiro passo consistiu em identificar e eliminar todas as colunas que não contribuem para a previsão de exoplanetas. Foram eliminadas três categorias de colunas:
+O primeiro passo consistiu em identificar e eliminar todas as colunas que não contribuem para a previsão de exoplanetas. Foram eliminadas cinco categorias de colunas:
 
 \textbf{Colunas de identificação:} \texttt{rowid}, \texttt{kepid}, \texttt{kepoi\_name}, \texttt{kepler\_name}. São identificadores de arquivo que não têm qualquer relação com as leis físicas que governam a deteção de planetas. O número de catálogo de uma estrela não influencia se ela tem ou não um planeta.
 
 \textbf{Colunas de texto redundantes:} \texttt{koi\_pdisposition} e \texttt{koi\_tce\_delivname}. A coluna \texttt{koi\_pdisposition} é uma versão preliminar da própria coluna alvo — fornecê-la ao modelo seria equivalente a dar-lhe a resposta durante o ``exame''.
+
+\textbf{Colunas que antecipam a resposta (fuga de informação):} \texttt{koi\_score} e as quatro \textit{flags} \texttt{koi\_fpflag\_nt}, \texttt{koi\_fpflag\_ss}, \texttt{koi\_fpflag\_co} e \texttt{koi\_fpflag\_ec}. São resultados do próprio processo de validação do Kepler: a pontuação resume a confiança da NASA na classificação e as \textit{flags} assinalam as razões pelas quais uma observação foi marcada como falso positivo. Tal como acontece com \texttt{koi\_pdisposition}, dá-las ao modelo equivale a dar-lhe a resposta durante o ``exame'': ele aprenderia a copiar a validação em vez de aprender a distinguir planetas a partir das propriedades físicas do sinal.
 
 \textbf{Colunas de erro duplicadas:} todas as colunas terminadas em \texttt{\_err2}, que são espelhos das colunas \texttt{\_err1} identificadas na análise de correlação.
 
 \textbf{Colunas completamente vazias:} \texttt{koi\_teq\_err1} e \texttt{koi\_teq\_err2}, que não contêm um único valor em todo o dataset.
 
 \begin{caixaresultado}
-Após a remoção, o dataset passou de \textbf{50 para 32 colunas}, eliminando 18 fontes de ruído e redundância sem perder qualquer informação física relevante.
+Após a remoção, o dataset passou de \textbf{50 para 27 colunas}, eliminando 23 fontes de ruído, redundância e fuga de informação sem perder qualquer informação física relevante.
 \end{caixaresultado}
 
 \section{Tratamento de Valores Nulos}
 
 Os dados reais são raramente perfeitos. Os telescópios falham, os instrumentos têm limitações, e algumas medições simplesmente não são possíveis em determinadas condições. O resultado são os chamados \textbf{valores nulos} ou \textbf{NaN} (\textit{Not a Number}) — buracos no dataset onde não existe informação.
 
-Após a remoção das colunas irrelevantes, identificámos valores nulos em 22 das 32 colunas restantes. O caso mais grave era a coluna \texttt{koi\_score}, com 1.510 valores em falta — o que representa 15,8\% do total de observações.
+Após a remoção das colunas irrelevantes, identificámos valores nulos em 21 das 27 colunas restantes. Os casos mais graves eram \texttt{koi\_slogg\_err1}, \texttt{koi\_srad\_err1} e \texttt{koi\_steff\_err1}, cada uma com 468 valores em falta — o que representa 4,9\% do total de observações.
 
 Perante valores nulos, um cientista de dados tem essencialmente duas opções:
 
 \begin{enumerate}
-    \item \textbf{Eliminar as linhas} com valores nulos (\texttt{dropna()}): simples de implementar, mas destrutivo. No nosso caso, eliminaríamos até 1.510 observações, perdendo dados potencialmente valiosos.
+    \item \textbf{Eliminar as linhas} com valores nulos (\texttt{dropna()}): simples de implementar, mas destrutivo. No nosso caso, eliminaríamos pelo menos 468 observações, perdendo dados potencialmente valiosos.
 
     \item \textbf{Imputar os valores em falta} com um valor estatístico representativo: preserva todas as observações ao custo de introduzir uma estimativa onde havia um buraco.
 \end{enumerate}
@@ -464,7 +470,7 @@ Quando o modelo precisa de classificar uma nova observação, todas as 500 árvo
 A analogia com a medicina é útil: em vez de consultar um único médico, consulta-se 500 especialistas independentes e aceita-se o diagnóstico que a maioria defende.
 
 \begin{caixaresultado}
-O modelo Random Forest foi treinado com sucesso com \textbf{500 árvores de decisão} e \textbf{31 características} por observação.
+O modelo Random Forest foi treinado com sucesso com \textbf{500 árvores de decisão} e \textbf{26 características} por observação.
 \end{caixaresultado}
 
 \section{Avaliação do Desempenho}
@@ -476,10 +482,10 @@ A avaliação de um modelo de classificação vai muito além de uma simples per
 A \textit{accuracy} é a métrica mais intuitiva: a percentagem de observações classificadas corretamente.
 
 \begin{caixaresultado}
-O modelo atingiu uma \textbf{accuracy de 90,96\%} no conjunto de teste — acertando em 9 de cada 10 classificações.
+O modelo atingiu uma \textbf{accuracy de 79,30\%} no conjunto de teste — acertando em cerca de 8 de cada 10 classificações.
 \end{caixaresultado}
 
-Embora impressionante, a \textit{accuracy} por si só pode ser enganosa com datasets desequilibrados. Um modelo que dissesse sempre ``FALSE POSITIVE'' teria uma \textit{accuracy} de 52,5\% sem aprender absolutamente nada.
+A \textit{accuracy} é intuitiva, mas por si só pode ser enganosa com datasets desequilibrados. Um modelo que dissesse sempre ``FALSE POSITIVE'' teria uma \textit{accuracy} de 52,5\% sem aprender absolutamente nada; o modelo supera esta linha de base em cerca de 27 pontos percentuais.
 
 \subsection{Precision e Recall}
 
@@ -500,22 +506,22 @@ No contexto da astronomia, o \textbf{Recall} é particularmente crítico para a 
 \toprule
 \textbf{Classe} & \textbf{Precision} & \textbf{Recall} & \textbf{F1-Score} & \textbf{Suporte} \\
 \midrule
-CANDIDATE & 0,83 & 0,80 & 0,81 & 449 \\
-CONFIRMED & 0,83 & 0,85 & 0,84 & 459 \\
-FALSE POSITIVE & 0,98 & 0,99 & 0,98 & 1.005 \\
+CANDIDATE & 0,66 & 0,46 & 0,54 & 449 \\
+CONFIRMED & 0,81 & 0,85 & 0,83 & 459 \\
+FALSE POSITIVE & 0,83 & 0,92 & 0,87 & 1.005 \\
 \midrule
-\textbf{Média Global} & \textbf{0,91} & \textbf{0,91} & \textbf{0,91} & \textbf{1.913} \\
+\textbf{Média Global} & \textbf{0,78} & \textbf{0,79} & \textbf{0,78} & \textbf{1.913} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 A análise dos resultados revela padrões importantes:
 
-\textbf{FALSE POSITIVE} apresenta os melhores resultados (Precision 0,98 e Recall 0,99), o que era esperado: é a classe maioritária, com padrões mais bem definidos e mais exemplos de treino disponíveis.
+\textbf{FALSE POSITIVE} apresenta os melhores resultados (Precision 0,83 e Recall 0,92), o que era esperado: é a classe maioritária, com mais exemplos de treino disponíveis.
 
-\textbf{CONFIRMED} tem um Recall de 0,85, o que significa que o modelo conseguiu identificar 85\% de todos os planetas confirmados presentes no conjunto de teste. Os restantes 15\% foram erroneamente classificados noutra categoria — principalmente como CANDIDATE.
+\textbf{CONFIRMED} tem um Recall de 0,85, o que significa que o modelo conseguiu identificar 85\% de todos os planetas confirmados presentes no conjunto de teste. Os restantes 15\% foram erroneamente classificados noutra categoria — principalmente como CANDIDATE (45 observações, contra 23 como FALSE POSITIVE).
 
-\textbf{CANDIDATE} é a classe com desempenho mais baixo (Recall 0,80), o que faz sentido físico: os candidatos são por definição as observações mais ambíguas, com características que se sobrepõem com as das outras duas classes. São os casos borderline, onde mesmo os astrónomos humanos têm dificuldade em chegar a uma conclusão.
+\textbf{CANDIDATE} é a classe com desempenho mais baixo (Recall 0,46: o modelo identifica menos de metade dos candidatos), o que faz sentido físico: os candidatos são por definição as observações mais ambíguas, com características que se sobrepõem com as das outras duas classes. São os casos borderline, onde mesmo os astrónomos humanos têm dificuldade em chegar a uma conclusão.
 
 \subsection{Matriz de Confusão}
 
@@ -528,7 +534,7 @@ A matriz de confusão é uma ferramenta de visualização que permite compreende
     \item Os valores \textbf{fora da diagonal} representam os erros.
 \end{itemize}
 
-A análise da matriz revelou que o erro mais frequente do modelo foi classificar \textbf{79 observações CANDIDATE como CONFIRMED}. Este é um erro compreensível: os candidatos com características mais sólidas são facilmente confundidos com planetas confirmados, especialmente quando o sinal-ruído é elevado. Na prática, estes ``erros'' podem até ser úteis — identificam os candidatos com maior probabilidade de vir a ser confirmados, tornando-se candidatos prioritários para observações de seguimento.
+A análise da matriz revelou que o erro mais frequente do modelo foi classificar \textbf{172 observações CANDIDATE como FALSE POSITIVE} (38\% dos candidatos), seguido de 72 CANDIDATE classificadas como CONFIRMED. Os candidatos são a classe onde a evidência é menos conclusiva, pelo que o modelo, na dúvida, tende a inclinar-se para a classe maioritária. Os erros do segundo tipo podem ainda assim ser úteis: identificam candidatos com características semelhantes às de planetas confirmados, que podem merecer prioridade em observações de seguimento.
 
 % =============================================================
 \chapter{Fase 5 — Explicabilidade da Inteligência Artificial}
@@ -559,18 +565,18 @@ No contexto do nosso modelo:
 
 O primeiro resultado do SHAP foi um \textbf{gráfico de importância global}: um ranking das características ordenadas pela sua influência média nas decisões do modelo, ao longo de todas as 1.913 observações de teste.
 
-As três características mais importantes identificadas foram:
+As três características mais importantes para a classe CONFIRMED foram:
 
 \begin{enumerate}
-    \item \textbf{koi\_score} — A pontuação de confiança calculada pela própria NASA para cada observação. Esta métrica resume em si uma análise complexa feita pelos sistemas automáticos do projeto Kepler, combinando vários indicadores numa única pontuação. O facto de ser a característica mais importante confirma que a NASA desenvolveu uma métrica extremamente eficaz.
+    \item \textbf{koi\_steff\_err1} — O erro na medição da temperatura efetiva da estrela. Não é a temperatura em si, mas a \textit{incerteza} nessa medição. Estrelas com medições de temperatura muito imprecisas tendem a ter observações menos fiáveis em geral, o que o modelo aprendeu a associar a classificações diferentes.
 
-    \item \textbf{koi\_model\_snr} — A relação sinal-ruído, que já tínhamos identificado na Fase 2 (EDA) como a característica que melhor separava visualmente as classes nos histogramas. O SHAP confirmou matematicamente o que a nossa análise visual sugeria — uma validação importante que demonstra a coerência entre a análise humana e a aprendizagem automática.
+    \item \textbf{koi\_duration\_err1} — O erro na medição da duração do trânsito. Tal como no caso anterior, é uma medida da qualidade da medição, e não uma propriedade física do planeta.
 
-    \item \textbf{koi\_steff\_err1} — O erro na medição da temperatura efetiva da estrela. Curiosamente, não é a temperatura em si, mas a \textit{incerteza} nessa medição. Estrelas com medições de temperatura muito imprecisas tendem a ter observações menos fiáveis em geral, o que o modelo aprendeu a associar a classificações mais incertas.
+    \item \textbf{koi\_model\_snr} — A relação sinal-ruído, que já tínhamos identificado na Fase 2 (EDA) como a característica que melhor separava visualmente as classes nos histogramas. O SHAP coloca-a em terceiro lugar, muito perto das duas primeiras.
 \end{enumerate}
 
 \begin{caixaresultado}
-A análise de importância global revelou uma \textbf{validação cruzada} entre a análise humana (EDA) e a aprendizagem automática: o SNR, identificado visualmente como a melhor feature separadora na Fase 2, foi confirmado pelo SHAP como a segunda característica mais importante para o modelo. Esta coerência demonstra que o modelo aprendeu padrões físicos reais, e não artefactos estatísticos.
+A análise de importância global mostra uma coerência apenas parcial entre a análise humana (EDA) e a aprendizagem automática: o SNR, identificado visualmente como a melhor feature separadora na Fase 2, continua entre as três mais influentes, mas já não é a principal. As duas primeiras são incertezas de medição, o que sugere que parte do que o modelo aprendeu reflete a qualidade com que cada observação foi medida, e não apenas a física do sinal. É uma limitação a ter presente ao interpretar os resultados.
 \end{caixaresultado}
 
 \section{Explicação Local — Uma Estrela Específica}
@@ -585,7 +591,7 @@ O SHAP respondeu com um \textbf{gráfico waterfall} (cascata), que mostra:
     \item O \textbf{valor final} — a probabilidade resultante após somar todas as contribuições.
 \end{itemize}
 
-No gráfico obtido, \textbf{todas as barras eram vermelhas}, indicando que todas as características da estrela analisada contribuíam positivamente para a classificação como CONFIRMED. A característica com maior contribuição foi, novamente, o \texttt{koi\_score} — a observação tinha uma pontuação de confiança muito elevada, o que por si só seria quase suficiente para a classificar como planeta confirmado.
+A estrela analisada (observação 7 do conjunto de teste, de classe real CONFIRMED) foi classificada como CONFIRMED com uma probabilidade de 0,498, face a um valor base de 0,24. Foi a classe com maior probabilidade das três, mas sem grande margem. No gráfico obtido, a característica com maior contribuição positiva foi \texttt{koi\_duration\_err1} (+0,10), seguida de \texttt{koi\_impact} (+0,05), enquanto \texttt{koi\_steff\_err1} ($-$0,08) e \texttt{koi\_period} ($-$0,03) empurraram a decisão no sentido contrário. Ao contrário de uma decisão dominada por uma única característica, aqui a classificação resulta de muitas contribuições pequenas que se somam.
 
 Esta capacidade de explicar \textit{individualmente} cada decisão é o que transforma o modelo de uma caixa negra num instrumento científico transparente e auditável.
 
@@ -595,7 +601,7 @@ Esta capacidade de explicar \textit{individualmente} cada decisão é o que tran
 
 \section{Síntese do Trabalho Desenvolvido}
 
-O projeto ExoDetect demonstrou que é possível construir um sistema de inteligência artificial capaz de identificar exoplanetas com um grau de precisão muito elevado, a partir de dados astronómicos reais. Ao longo de cinco fases estruturadas, foram abordados todos os aspetos essenciais de um projeto de ciência de dados:
+O projeto ExoDetect demonstrou que é possível construir um sistema de inteligência artificial capaz de identificar exoplanetas com bom desempenho a distinguir planetas confirmados e falsos positivos (e mais dificuldade nos candidatos), a partir de dados astronómicos reais. Ao longo de cinco fases estruturadas, foram abordados todos os aspetos essenciais de um projeto de ciência de dados:
 
 \begin{table}[h]
 \centering
@@ -608,9 +614,9 @@ Fase 1 & Carregamento e inspeção de 9.564 observações com 50 característica
 \addlinespace
 Fase 2 & Identificação do desequilíbrio de classes; análise de histogramas físicos; detecção de redundâncias por correlação. \\
 \addlinespace
-Fase 3 & Redução de 50 para 32 colunas; eliminação de todos os valores nulos por imputação mediana; normalização MinMaxScaler. \\
+Fase 3 & Redução de 50 para 27 colunas (incluindo a remoção de colunas com fuga de informação); eliminação de todos os valores nulos por imputação mediana; normalização MinMaxScaler. \\
 \addlinespace
-Fase 4 & Treino de Random Forest com 500 árvores; avaliação com accuracy de 90,96\%; análise de Precision, Recall e Matriz de Confusão. \\
+Fase 4 & Treino de Random Forest com 500 árvores; avaliação com accuracy de 79,30\%; análise de Precision, Recall e Matriz de Confusão. \\
 \addlinespace
 Fase 5 & Aplicação de SHAP para identificação das features mais importantes e explicação individual de classificações. \\
 \bottomrule
@@ -619,13 +625,13 @@ Fase 5 & Aplicação de SHAP para identificação das features mais importantes 
 
 \section{Principais Descobertas}
 
-O projeto permitiu identificar três descobertas científicas relevantes:
+O projeto permitiu retirar três conclusões relevantes:
 
-\textbf{1. O SNR como preditor principal de exoplanetas.} Tanto a análise visual (EDA) como a análise matemática (SHAP) convergiram para a mesma conclusão: a relação sinal-ruído é a característica física que mais discrimina planetas reais de falsos positivos. Isto está em linha com o conhecimento astronómico estabelecido — sinais limpos e consistentes são a assinatura de trânsitos planetários reais.
+\textbf{1. O SNR continua a ser uma característica muito informativa, mas não a única.} A análise visual (EDA) apontava a relação sinal-ruído como a característica que melhor separa as classes, e o SHAP mantém-na entre as três mais influentes para os planetas confirmados. No entanto, as duas primeiras são incertezas de medição (\texttt{koi\_steff\_err1} e \texttt{koi\_duration\_err1}), pelo que o modelo também usa a qualidade da medição como pista.
 
-\textbf{2. A dificuldade inerente dos candidatos.} O modelo atingiu um Recall de 80\% na classe CANDIDATE — o mais baixo das três classes. Este resultado não é uma falha do modelo, mas um reflexo da realidade astronómica: os candidatos são, por definição, as observações mais ambíguas, onde a evidência disponível não é suficiente para uma conclusão definitiva.
+\textbf{2. A dificuldade inerente dos candidatos.} O modelo atingiu um Recall de 46\% na classe CANDIDATE — o mais baixo das três classes —, e o erro mais frequente foi classificar candidatos como falsos positivos (172 casos). Em parte, é um reflexo da realidade astronómica: os candidatos são, por definição, as observações mais ambíguas, onde a evidência disponível não é suficiente para uma conclusão definitiva.
 
-\textbf{3. A coerência entre intuição humana e aprendizagem automática.} As características identificadas como importantes pela análise exploratória humana (Fase 2) foram confirmadas pelo SHAP (Fase 5) como as mais influentes nas decisões do modelo. Esta coerência valida tanto a metodologia de análise exploratória como a integridade do processo de aprendizagem automática.
+\textbf{3. A importância de detetar fuga de informação.} Na primeira versão, o modelo usava \texttt{koi\_score} e as \textit{flags} \texttt{koi\_fpflag\_*}, e a accuracy era 90,96\%. Estas colunas são resultados do processo de validação do Kepler, ou seja, uma parte da resposta. Retirá-las fez a accuracy descer para 79,30\% (e o Recall dos candidatos de 80\% para 46\%), mas o resultado passou a medir o que o modelo consegue aprender a partir das propriedades do sinal.
 
 \section{Impacto e Aplicações Futuras}
 
@@ -643,7 +649,7 @@ O sistema desenvolvido, embora construído com fins académicos, demonstra o pot
 
 Este projeto ilustra uma lição fundamental da ciência de dados moderna: a inteligência artificial é mais poderosa quando é usada em \textit{parceria} com o conhecimento humano, e não como substituto dele. O cientista de dados trouxe intuição física sobre o problema astronómico (Fase 2), tomou decisões metodológicas fundamentadas (Fase 3), e interpretou os resultados no contexto do domínio (Fase 4 e 5). O algoritmo trouxe capacidade de processamento e identificação de padrões a uma escala impossível para um ser humano.
 
-A explicabilidade — implementada através do SHAP — foi o elemento que fechou este ciclo, permitindo que os resultados da IA fossem comunicados de forma transparente e verificável. Um modelo que acerta 91\% das vezes mas não explica o seu raciocínio é cientificamente menos valioso do que um modelo ligeiramente menos preciso mas completamente transparente.
+A explicabilidade — implementada através do SHAP — foi o elemento que fechou este ciclo, permitindo que os resultados da IA fossem comunicados de forma transparente e verificável. O gráfico SHAP da primeira versão já assinalava o problema, ao mostrar o \texttt{koi\_score} como a característica mais importante. Um modelo que acerta 91\% das vezes porque usa uma saída da validação como atalho é cientificamente menos valioso do que um modelo que acerta 79\% a partir da física do sinal e o consegue demonstrar.
 
 O projeto ExoDetect é, portanto, mais do que um exercício técnico: é uma demonstração de como a inteligência artificial pode ser usada de forma responsável, transparente e científicamente rigorosa na fronteira do conhecimento humano.
 
