@@ -1,30 +1,29 @@
-# ExoDetect — classificar exoplanetas do Kepler
+# ExoDetect — classifying Kepler exoplanet candidates
 
-Projeto individual do 1.º ano da licenciatura em Inteligência Artificial e
-Ciência de Dados, Universidade da Beira Interior.
+Individual first-year project, BSc in Artificial Intelligence and Data Science,
+University of Beira Interior (Portugal).
 
-O telescópio Kepler observou milhares de estrelas à procura de pequenas quedas de
-brilho causadas por planetas a passar à frente delas. A maior parte destes sinais
-acaba por não ser um planeta. O objetivo aqui é treinar um modelo que, dado um
-sinal, decida entre três classes: **planeta confirmado**, **candidato** ou
-**falso positivo** — e perceber em que é que esse modelo se baseia para decidir.
+The Kepler telescope watched thousands of stars for small dips in brightness
+caused by planets passing in front of them. Most of those signals turn out not to
+be planets. The goal here is to train a model that, given a signal, decides
+between three classes — **confirmed planet**, **candidate**, or **false
+positive** — and to work out what that model is actually using to decide.
 
-Dados: tabela cumulativa de *Kepler Objects of Interest* do NASA Exoplanet
-Archive (9 564 observações, 50 colunas).
+Data: the cumulative *Kepler Objects of Interest* table from the NASA Exoplanet
+Archive (9,564 observations, 50 columns).
 
-## Resultados
+## Results
 
-Random Forest com 500 árvores, 26 *features*, divisão 80/20 estratificada,
-`random_state=42`.
+Random Forest, 500 trees, 26 features, stratified 80/20 split, `random_state=42`.
 
-| Classe | Precision | Recall | F1 | Observações |
+| Class | Precision | Recall | F1 | Support |
 |---|---|---|---|---|
-| CANDIDATE | 0,66 | 0,46 | 0,54 | 449 |
-| CONFIRMED | 0,81 | 0,85 | 0,83 | 459 |
-| FALSE POSITIVE | 0,83 | 0,92 | 0,87 | 1 005 |
-| **Accuracy** | | | **79,30%** | 1 913 |
+| CANDIDATE | 0.66 | 0.46 | 0.54 | 449 |
+| CONFIRMED | 0.81 | 0.85 | 0.83 | 459 |
+| FALSE POSITIVE | 0.83 | 0.92 | 0.87 | 1,005 |
+| **Accuracy** | | | **79.30%** | 1,913 |
 
-Matriz de confusão (linhas = classe real, colunas = classe prevista):
+Confusion matrix (rows = true class, columns = predicted class):
 
 ```
                  CAND  CONF   FP
@@ -33,94 +32,94 @@ CONFIRMED          45   391   23
 FALSE POSITIVE     62    22  921
 ```
 
-Como linha de base, responder sempre "FALSE POSITIVE" daria 52,5%, porque é a
-classe maioritária. Os 79,30% ficam 27 pontos acima disso.
+As a baseline, always answering "FALSE POSITIVE" would give 52.5%, since that is
+the majority class. The 79.30% sits 27 points above it.
 
-Os candidatos são a classe mais difícil (recall 0,46) e o erro mais frequente do
-modelo é classificá-los como falsos positivos. Isto não me parece um defeito do
-modelo: um candidato é, por definição, uma observação cuja evidência não foi
-conclusiva, e as suas características sobrepõem-se às das outras duas classes.
+Candidates are the hardest class (recall 0.46), and the model's most frequent
+error is classifying them as false positives. That does not strike me as a defect
+of the model: a candidate is by definition an observation whose evidence was
+inconclusive, and its properties overlap those of the other two classes.
 
-## A parte que mais me ensinou: fuga de informação
+## The part that taught me most: data leakage
 
-Na primeira versão deste trabalho o modelo tinha 90,96% de accuracy. Estava a
-usar, entre as *features*, a coluna `koi_score` e as quatro `koi_fpflag_*`.
+The first version of this project reached 90.96% accuracy. It was using, among
+the features, the `koi_score` column and the four `koi_fpflag_*` flags.
 
-Essas colunas não são medições do telescópio. São o **resultado do processo de
-validação da NASA**: a `koi_score` é a confiança que a própria NASA atribuiu à
-classificação, e as `koi_fpflag_*` assinalam os motivos pelos quais uma
-observação foi marcada como falso positivo. Dá-las ao modelo é dar-lhe parte da
-resposta — ele não aprende a reconhecer um planeta, aprende a copiar uma decisão
-que já estava tomada.
+Those columns are not telescope measurements. They are the **output of NASA's own
+vetting process**: `koi_score` is the confidence NASA itself assigned to the
+classification, and the `koi_fpflag_*` flags record the reasons an observation was
+marked as a false positive. Handing them to the model means handing it part of the
+answer — it does not learn to recognise a planet, it learns to copy a decision
+that had already been made.
 
-Retirei-as e voltei a treinar, com o mesmo código e a mesma semente:
+I removed them and retrained, same code and same seed:
 
 | | Accuracy | Recall CANDIDATE | Recall CONFIRMED | Recall FALSE POSITIVE |
 |---|---|---|---|---|
-| Com `koi_score` e `koi_fpflag_*` (31 features) | 90,96% | 0,80 | 0,85 | 0,99 |
-| Sem essas colunas (26 features) | 79,30% | 0,46 | 0,85 | 0,92 |
+| With `koi_score` and `koi_fpflag_*` (31 features) | 90.96% | 0.80 | 0.85 | 0.99 |
+| Without them (26 features) | 79.30% | 0.46 | 0.85 | 0.92 |
 
-Onze pontos de accuracy e metade do recall dos candidatos vinham daquelas cinco
-colunas. O número mais alto era o número errado, e os 79,30% são o que o modelo
-consegue fazer a partir das propriedades do sinal. O que me levou a desconfiar foi
-o gráfico do SHAP: a `koi_score` aparecia como a *feature* mais importante, muito
-à frente de tudo o resto.
+Eleven accuracy points, and half the recall on candidates, were coming from those
+five columns. The higher number was the wrong number, and 79.30% is what the model
+can do from the properties of the signal. What made me suspicious was the SHAP
+plot: `koi_score` showed up as the most important feature by a wide margin.
 
-## O que o SHAP mostra
+## What SHAP shows
 
-Depois da correção, as três *features* mais influentes para a classe CONFIRMED
-são `koi_steff_err1`, `koi_duration_err1` e `koi_model_snr`.
+After the fix, the three most influential features for the CONFIRMED class are
+`koi_steff_err1`, `koi_duration_err1` and `koi_model_snr`.
 
-Eu esperava o sinal-ruído (`koi_model_snr`) em primeiro lugar, porque foi a
-*feature* que melhor separava as classes nos histogramas da análise exploratória.
-Aparece, mas em terceiro. As duas primeiras são **incertezas de medição** — o erro
-na temperatura da estrela e o erro na duração do trânsito. Parte do que o modelo
-aprendeu é portanto a qualidade com que cada observação foi medida, e não a física
-do planeta. É uma limitação do trabalho e fica registada como tal.
+I expected signal-to-noise (`koi_model_snr`) to come first, since it was the
+feature that separated the classes best in the exploratory histograms. It appears,
+but third. The top two are **measurement uncertainties** — the error on the star's
+effective temperature and the error on the transit duration. So part of what the
+model learned is how well each observation was measured, rather than the physics
+of the planet. That is a limitation of this work and it is recorded as one.
 
-O passo seguinte, se voltar a este projeto, é treinar só com as colunas de medição
-física, deixando de fora todas as `_err1`, para medir quanto é que o resultado
-depende da qualidade da medição.
+The next step, if I return to this project, is to train using only the physical
+measurement columns, dropping every `_err1` column, to measure how much of the
+result depends on measurement quality.
 
-## Como está organizado
+## Layout
 
 ```
 projeto_ExoDetect/
-├── ExoDetect.ipynb          análise, limpeza, treino e SHAP, por fases
-├── cumulative.csv           dados do NASA Exoplanet Archive
-└── relatorio_exodetect.tex  relatório escrito (LaTeX)
+├── ExoDetect.ipynb          analysis, cleaning, training and SHAP, by phase
+├── cumulative.csv           data from the NASA Exoplanet Archive
+└── relatorio_exodetect.tex  written report (LaTeX, in Portuguese)
 ```
 
-O notebook está dividido em cinco fases, cada uma com o que foi feito e porquê:
-carregar e inspecionar os dados, análise exploratória, preparação dos dados,
-treino e avaliação, explicabilidade com SHAP.
+The notebook is divided into five phases, each stating what was done and why:
+loading and inspecting the data, exploratory analysis, preprocessing, training and
+evaluation, and explainability with SHAP.
 
-## Como correr
+## Running it
 
 ```bash
 pip install pandas numpy matplotlib seaborn scikit-learn shap jupyter
 jupyter notebook projeto_ExoDetect/ExoDetect.ipynb
 ```
 
-Executar as células por ordem. O notebook lê o `cumulative.csv` do mesmo
-diretório. O cálculo dos valores SHAP é a parte mais lenta e leva alguns minutos.
+Run the cells in order. The notebook reads `cumulative.csv` from the same
+directory. Computing the SHAP values is the slow part and takes a few minutes.
 
-## Decisões que vale a pena justificar
+## Decisions worth justifying
 
-- **Random Forest** — lida com colunas em escalas muito diferentes, resiste aos
-  *outliers* que este dataset tem em abundância, e permite extrair a importância
-  das *features*, que era necessária para a última fase.
-- **Mediana e não média** para preencher valores em falta, porque as distribuições
-  são muito assimétricas e a média seria arrastada pelos valores extremos.
-- **`stratify=y`** na divisão treino/teste, para as três classes manterem a sua
-  proporção nos dois conjuntos; sem isso, as métricas da classe CANDIDATE
-  deixariam de ser fiáveis.
-- **Normalização MinMax** — não é necessária para árvores de decisão. Fi-la para
-  poder comparar os valores SHAP entre colunas medidas em unidades diferentes.
-- **Remoção das colunas `_err2`** — são a margem de erro inferior da mesma medição
-  que as `_err1`, ou seja, informação duplicada. Para várias colunas a correlação
-  entre as duas é exatamente −1.
+- **Random Forest** — handles columns on very different scales, is robust to the
+  outliers this dataset has in abundance, and exposes per-feature importance,
+  which the last phase needed.
+- **Median rather than mean** for filling missing values, because the
+  distributions are strongly skewed and the mean would be dragged by the extreme
+  values.
+- **`stratify=y`** on the train/test split, so all three classes keep their
+  proportion in both sets; without it the CANDIDATE metrics would stop being
+  reliable.
+- **MinMax scaling** — not required for decision trees. I did it so SHAP values
+  stay comparable across columns measured in different units.
+- **Dropping the `_err2` columns** — they are the lower error bar of the same
+  measurement as the `_err1` columns, so the information is largely duplicated.
+  For several columns the correlation between the two is exactly −1.
 
 ---
 
-**Autor:** Bernardo Nabais · Universidade da Beira Interior · 2026
+**Author:** Bernardo Nabais · University of Beira Interior · 2026
